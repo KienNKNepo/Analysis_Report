@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Báo cáo cổ phiếu</title>
+
+  <!-- Moment.js, Chart.js, và adapter cho Moment -->
+<!-- Chỉ include 1 lần -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+  <style>
+    /*------------------------------------------------------
+      CHẾ ĐỘ HIỂN THỊ TRÊN MÀN HÌNH (Screen)
+    -------------------------------------------------------*/
+    @media screen {
+      .page {
+        width: 210mm;            
+        min-height: 297mm;       
+        margin: 10px auto;       
+        border: 2px dashed #ccc; 
+        box-sizing: border-box;
+        /* Sử dụng flex-direction: column 
+           để header ở trên, 2 cột ở dưới */
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    /*------------------------------------------------------
+      CHẾ ĐỘ IN ẤN (Print)
+    -------------------------------------------------------*/
+    @media print {
+      @page {
+        size: A4;    
+        margin: 0;   
+      }
+      .page {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        border: none;
+        box-sizing: border-box;
+        page-break-after: always;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    /* CSS tổng quát */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /*------------------------------------------------------
+      HEADER (Thanh header xanh) - full width
+    -------------------------------------------------------*/
+    .header-bar {
+    width: 100%;
+    background-color: #144E8C;
+    color: #fff;
+    display: flex;
+    align-items: center;       /* Căn giữa theo trục dọc */
+    justify-content: center;   /* Căn giữa theo trục ngang */
+    padding: 20px 50px;
+    box-sizing: border-box;
+    }
+
+    .header-text {
+      margin-left: 0 auto; 
+    }
+
+    .company-name {
+      font-size: 25px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+
+    /*------------------------------------------------------
+      KHU VỰC 2 CỘT (left-col & right-col)
+    -------------------------------------------------------*/
+    .content-row {
+      /* Phần này chia làm 2 cột */
+      display: flex;
+      flex: 1; /* Chiếm hết không gian còn lại bên dưới header */
+    }
+    .left-col {
+      width: 70%;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+    .right-col {
+      width: 70%;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+
+    /*------------------------------------------------------
+      CSS chi tiết cho left-col (nội dung báo cáo)
+    -------------------------------------------------------*/
+    .report-container {
+      margin-top: 6px;
+      width: 300px;
+    }
+    .report-header {
+      background-color: #144E8C;
+      color: #fff;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .recommendation-section {
+      color: #144E8C;
+      padding: 1px;
+      font-size: 13px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .horizontal-line {
+      border-top: 1px solid black;
+      margin-top: 4px;
+      margin-bottom: 1px;
+    }
+    .report-body table,
+    .infor-body table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .report-body td,
+    .infor-body td {
+      padding: 2px 0;
+      text-align: right;
+    }
+    .report-body td:first-child,
+    .infor-body td:first-child {
+      text-align: left;
+    }
+    .chart-container {
+      width: 300px;
+      height: 130px;
+      margin-top: 15px;
+    }
+    /* Header cho mỗi trang sau trang 1 */
+    .header-page {
+      /* Bố trí logo và text trên cùng một dòng */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      /* Đường kẻ ngang dưới cùng */
+      border-bottom: 1px solid #ccc;
+
+      /* Khoảng cách hai bên */
+      padding: 10px 20px;
+      box-sizing: border-box;
+    }
+
+    /* Tuỳ chỉnh logo bên trái */
+    .header-page img {
+      height: 80px;  /* Chiều cao logo, tuỳ chỉnh */
+    }
+    /* Phần thông tin bên phải */
+    .header-report-info {
+    font-size: 14px;   /* Cỡ chữ tuỳ ý */
+    color: #333;       /* Màu chữ tuỳ ý */
+    margin-top: 70px;
+    }
+    /* Sử dụng CSS Grid để sắp xếp 4 biểu đồ line thành 2 hàng, 2 cột */
+    .grid-container1 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: 30px;       /* Khoảng cách giữa các hàng là 40px */
+      column-gap: 70px;    /* Khoảng cách giữa các cột là 20px */
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .chart-container1 {
+      position: relative;
+      width: 100%;
+      height: 300px;
+    }
+    /* Biểu đồ cột nằm riêng bên dưới */
+    .bar-chart-container1 {
+      width: 600px;
+      height: 300px;
+      margin: 40px auto;
+    }
+    .chart-title1 {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    /* Định nghĩa một lớp CSS cho khung */
+    .highlight-box {
+      border: 0px solid #ccc;       /* Viền xám nhạt */
+      background-color: #FBF0DE;    /* Nền màu xám rất nhạt */
+      border-radius: 6px;           /* Bo góc (tùy ý) */
+      padding: 6px;                /* Khoảng cách bên trong */
+      margin: 10px 0;               /* Khoảng cách trên-dưới */
+    }
+      .financial-table {
+    border-collapse: collapse;
+    width: 95%;
+    margin-bottom: 20px;
+    margin-left: 20px;
+  }
+
+  .financial-table thead th {
+    text-align: center;
+    font-weight: bold;
+    background-color: #144E8C; /* màu nền xanh */
+    color: white;             /* chữ màu trắng */
+  }
+
+  .financial-table td,
+  .financial-table th {
+    border: none;            /* Không kẻ ô */
+    padding: 6px 8px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* Tạo đường kẻ ngang sau mỗi phần */
+  .financial-table tbody {
+    margin-bottom: 20px;         /* Khoảng cách tách giữa các phần */
+    border-bottom: 1px solid #999; /* Đường kẻ ngang sau mỗi phần */
+  }
+
+  /* Ẩn đường kẻ ngang sau phần cuối, nếu muốn */
+  .financial-table tbody:last-of-type {
+    border-bottom: none;
+  }
+
+  .financial-table .label-col {
+    text-align: left; /* Căn trái cho cột Chỉ tiêu */
+    width: 35%;
+  }
+
+  .financial-table .comment-row td {
+    text-align: justify;
+    /* font-style: italic; */
+    padding: 6px 8px;
+  }
+
+    /* Table sectorsector */
+    /* 
+      Đặt trong lớp .finance-container, .finance-table
+      để không ảnh hưởng đến CSS đã có 
+    */
+    .finance-container {
+      margin: 20px auto;
+      max-width: 1100px;
+    }
+    .finance-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #144E8C;
+      font-size: 16px;
+    }
+    
+    .finance-table {
+      border-collapse: collapse;
+      width: 90%;
+      font-size: 14px;
+      margin: 0 auto;
+    }
+    /* Hàng tiêu đề */
+    .finance-table thead tr {
+      background-color: #144E8C; /* xanh đậm */
+      color: #fff               /* chữ trắng */
+    }
+    .finance-table th,
+    .finance-table td {
+      border: none;        /* không kẻ ô dọc */
+      padding: 6px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    /* Chỉ kẻ ngang sau mỗi dòng */
+    .finance-table tbody tr:nth-child(6) {
+  border-bottom: 2px solid #979797;
+}
+    /* Bỏ kẻ ngang sau dòng cuối */
+    .finance-table tbody tr:last-of-type {
+      border-bottom: none;
+    }
+    /* Cột Mã, Sàn căn trái */
+    .left-col {
+      text-align: left;
+    }
+    /* Dòng đầu tiên (mã đầu tiên) => nền xanh nhạt, in đậm */
+    .finance-table tbody tr:first-of-type {
+      background-color: #3a6ca2; /* xanh nhạt */
+      font-weight: bold;
+    }
+    /* Dòng trung bình, trung vị => bôi nhạt, in đậm */
+    .stats-row {
+      background-color: #f9f9f9;
+      font-weight: bold;
+    }
+    .finance-note {
+      font-size: 12px;
+      text-align: right;
+      color: #666;
+      margin-top: 4px;
+    }
+        /* CSS đóng gói trong lớp market1 */
+        .market1 {
+      margin: 20px auto;
+      max-width: 800px;
+      font-family: Arial, sans-serif;
+    }
+    .market1 h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #144E8C;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .market1 .chart-container {
+      position: relative;
+      height: 300px;
+      width: 8cm;
+    }
+    /* Đóng gói CSS vào lớp market2 để tránh trùng lặp */
+    .market2 {
+      max-width: 1000px;
+      margin: 20px auto;
+      font-family: Arial, sans-serif;
+    }
+    .market2 h2 {
+      text-align: center;
+      color: #144E8C;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .market2 .chart-container {
+      position: relative;
+      height: 600px; /* Chiều cao biểu đồ */
+      width: 20cm;
+    }
+        /* Đóng gói CSS trong lớp market3 */
+        .market3 {
+      max-width: 1000px;
+      margin: 20px auto;
+      font-family: Arial, sans-serif;
+    }
+    .market3 h2 {
+      text-align: center;
+      color: #144E8C;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .market3 .chart-container {
+      position: relative;
+      height: 600px; /* Chiều cao biểu đồ */
+      width: 15cm;
+    }
+    /* Đóng gói CSS trong lớp .market4 để không trùng với phần khác */
+    .market4 {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    .market4 h2 {
+      text-align: center;
+      color: #144E8C;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    .market4 table {
+      width: 20cm;
+      border-collapse: collapse;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+    .market4 th, .market4 td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: center;
+      /* font-size: 13px; */
+    }
+    /* Hai hàng đầu tiên tô màu xanh dương, chữ trắng */
+    .market4 thead tr {
+      background-color: #144E8C;
+      color: #fff;
+    }
+    /* Nhóm header (Tăng trưởng, Hồi phục, ...) mỗi nhóm 1 màu */
+    .market4 .group-header {
+      font-weight: bold;
+      color: #fff;
+    }
+    .market4 .group-header.thang-truong {
+      background-color: #ffffffff; /* xanh lá */
+      color: #62BD7A;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .market4 .group-header.hoi-phuc {
+      background-color: #ffffffff; /* vàng */
+      color: #FBB679; /* chữ đen để dễ đọc trên nền vàng */
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .market4 .group-header.tao-day {
+      background-color: #ffffffff; /* cam */
+      color: #4090CE; /* chữ đen */
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .market4 .group-header.suy-yeu {
+      background-color: #ffffff; /* đỏ */
+      color: #F8696B;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .marketcap {
+      max-width: 500px;
+      margin: 20px auto;
+      font-family: Arial, sans-serif;
+    }
+    .marketcap h2 {
+      text-align: center;
+      color: #144E8C;
+      margin-bottom: 20px;
+    }
+    .marketcap .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+    }
+    /* CSS đóng gói trong lớp .phu_luc để không ảnh hưởng phần khác */
+    .phu_luc {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 1200px;
+    }
+
+    .phu_luc h2 {
+      text-align: center;
+      color: #144E8C;
+      margin-bottom: 10px;
+    }
+
+    /* Mỗi bảng đều căn giữa */
+    .phu_luc table {
+      margin: 0 auto; /* Căn giữa */
+      width: 90%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .phu_luc th, .phu_luc td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      font-size: 13px;
+      text-align: right;
+    }
+    .phu_luc th {
+      background-color: #144E8C;
+      color: #fff;
+      text-align: center;
+    }
+    /* Cột đầu (chỉ tiêu) căn trái */
+    .phu_luc th:first-child,
+    .phu_luc td:first-child {
+      text-align: left;
+      width: 40%;
+    }
+    /* In đậm 4 chỉ tiêu đặc biệt */
+    .phu_luc .bold-field {
+      font-weight: bold;
+    }
+    /* Tô màu xanh dương nhạt cho "Tổng cộng tài sản" và "Tổng cộng nguồn vốn" */
+    .phu_luc .highlight-field {
+      background-color: #dce6f7; /* xanh dương nhạt */
+      font-weight: bold;
+    }
+    /* Thụt lề cho các mục con */
+    .phu_luc .indent {
+      padding-left: 15px;
+      font-style: italic;
+    }
+    /* Tiêu đề bảng (caption) */
+    .phu_luc caption {
+      text-align: left;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #144E8C;
+    }
+        /* CSS được đóng gói trong lớp .khoplenh */
+        .khoplenh {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      text-align: center;
+    }
+    .khoplenh h2 {
+      color: #144E8C;
+      margin-bottom: 20px;
+    }
+    .khoplenh .chart-container {
+      width: 20cm;
+      height: 10cm;
+      margin: 0 auto 40px auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Trang 1 -->
+  <div class="page">
+    <!-- HEADER - chạy full width ở trên -->
+    <div class="header-bar">
+      <!-- Logo (nếu cần) -->
+      <!-- <img src="UEL.png" alt="Logo" /> -->
+      <div class="header-text">
+        <div class="company-name"><span id="Name"></span></div>
+        <table>
+          <tr>
+            <td>Sector: </td>
+            <td id="Sector"></td>
+            <td style="padding: 0 15px;">|</td>
+            <td>Exchange: </td>
+            <td id="Exchange"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <!-- Khu vực 2 cột (left-col & right-col) -->
+    <div class="content-row">
+      <!-- CỘT TRÁI: Nội dung báo cáo -->
+      <div class="left-col" style = "width: fit-content; height:fit-content">
+        <div class="report-container">
+          <div class="report-header" id="report-date">25/11/2024</div>
+          <div class="recommendation-section">
+            <span>RECOMMENDATION</span>
+            <span id="recommendation"></span>
+          </div>
+          <div class="horizontal-line"></div>
+
+          <div class="report-body">
+            <table>
+              <tr>
+                <td>Current price</td>
+                <td id="currentPrice"></td>
+              </tr>
+              <tr>
+                <td>Buy</td>
+                <td id="Buy"></td>
+              </tr>
+              <tr>
+                <td>Hold</td>
+                <td id="Hold"></td>
+              </tr>
+              <tr>
+                <td>Sell</td>
+                <td id="Sell"></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="recommendation-section" style="margin-top: 6px;">
+            <span>STOCK INFORMATION</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div class="infor-body">
+            <table>
+              <tr>
+                <td>Outstanding shares (million)</td>
+                <td id="Quantity"></td>
+              </tr>
+              <tr>
+                <td>Capitalization (billion VND)</td>
+                <td id="MarketCap"></td>
+              </tr>
+              <tr>
+                <td>Avg trading volume 3 months</td>
+                <td id="Avg3m"></td>
+              </tr>
+              <tr>
+                <td>Initial listing date</td>
+                <td id="StartDate"></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="recommendation-section" style="margin-top: 6px;">
+            <span>MATERIAL ASPECT</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div class="infor-body">
+            <table>
+              <tr>
+                <td>EPS (VND)</td>
+                <td id="EPS"></td>
+              </tr>
+              <tr>
+                <td>BVPS (VND)</td>
+                <td id="BVPS"></td>
+              </tr>
+              <tr>
+                <td>Dept/Equity</td>
+                <td id="DoE"></td>
+              </tr>
+              <tr>
+                <td>ROA</td>
+                <td id="ROA"></td>
+              </tr>
+              <tr>
+                <td>ROE</td>
+                <td id="ROE"></td>
+              </tr>
+              <tr>
+                <td>P/E</td>
+                <td id="PoE"></td>
+              </tr>
+              <tr>
+                <td>P/B</td>
+                <td id="PoB"></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Biểu đồ -->
+          <div class="recommendation-section" style="margin-top: 6px;">
+            <span>PRICE MOVEMENT COMPARED VNINDEX</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div class="chart-container" style = "margin-top: 2px;">
+            <canvas id="priceChart"></canvas>
+          </div>
+
+          <div class="recommendation-section" style="margin-top: 20px;">
+            <span style = "font-size: 13px;">PRICE TREND</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div class="chart-container" style = "margin-top: 2px;">
+            <canvas id="stock_chart"></canvas>
+          </div>
+          
+          <!-- Sơ lược công ty -->
+          <div class="recommendation-section" style="margin-top: 1px;">
+            <span>COMPANY OVERVIEW</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div class = "infor-body">
+            <div id = "companyOverview" style="margin-top: 6px; text-align: justify; font-size: 12px;">
+            </div>
+          </div>
+
+          <!-- Thông tin sinh viên -->
+          <div class="recommendation-section" style="margin-top: 8px; margin-bottom: 1px">
+            <span>STUDENT ANALYST</span>
+            <span></span>
+          </div>
+          <div class="horizontal-line"></div>
+          <div style="font-weight: bold; margin-top: 6px; font-size: 12px">
+            Nguyễn Hữu Kiên - K224141670
+          </div>
+          <div style="margin-top: 4px;font-size: 13px">
+            kiennh22414@st.uel.edu.vn
+          </div>
+        </div>
+      </div> <!-- Hết left-col -->
+
+      <!-- CỘT PHẢI: Phần chú thích, ghi chú thêm -->
+      <div class="right-col">
+        <h2 style="color: #d7b61e; margin-top: 6px; font-size: 19px; text-align:center;">
+          BUSINESS PERFORMANCE ANALYSIS
+        </h2>
+        <div class="highlight-box">
+          <div class = "financialAnalysis" style = "text-align: justify; margin: 12px;">
+        </div>
+      </div> <!-- Hết right-col -->
+      <h3 style="color: #144E8C; margin-top: 20px; font-size: 19px; text-align:left; margin-bottom: 10px;">
+        Investment highlights
+      </h3>
+      <div class="highlight-invest" style ="text-align: justify; font-size: 16px;">
+        <div id = "hightlightInvestment" style = "margin-bottom: 8px;"></div>
+      </div>
+    </div>
+    </div> <!-- Hết content-row -->
+  </div> <!-- Hết .page -->
+<!-- Trang 2 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <h3 style="color: #144E8C; margin-left: 9.5cm; margin-top: 40px; font-size: 19px; text-align:left; margin-bottom: 2px;">
+    Overview of the Market Landscape
+  </h3>
+  <div class = "part5" style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm">
+  </div>
+  <div class="market1" style="width:fit-content ;margin-left: 1.2cm;">
+    <h2 style="margin-left: -1cm; margin-top: -10px; font-size: 14px; text-align:right;"><i>Figure 1: Net Profit Growth (%) by Year</i></h2>
+    <div class="horizontal-line"></div>
+    <div class="chart-container">
+      <canvas id="marketChart" style = "margin-top: -35px; margin-left: -1cm;"></canvas>
+      <div class="horizontal-line"></div>
+    </div>
+  </div>
+  <div class="marketcap" style="width:fit-content ;margin-left: 10cm; margin-top: -310px;">
+    <h2 style="margin-top: -20px; font-size: 14px; text-align: left; margin-bottom: 13px;"><i>Figure 2: % Contribution of Sectors to Market Capitalization</i></h2>
+    <div class="horizontal-line"></div>
+    <div class="chart-container">
+      <canvas id="marketcapChart" style = "margin-top: -35px;"></canvas>
+      <div class="horizontal-line"></div>
+    </div>
+  </div>
+</div>
+<!-- Trang 3 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <div class="market2" style = "width: 20cm;" >
+    <h2 style="margin-top: 20px; text-align: right;"><i>Figure 3: Net Profit Growth in 2024 (YoY) by Sector</i></h2>
+    <div class="horizontal-line"></div>
+    <div class="chart-container" style="position: relative;">
+      <canvas id="icb2Chart"></canvas>
+      <div style="position: absolute; top: 170px; right: 10px; background-color: rgba(255,255,255,0.8); padding: 5px; border: 1px solid orange; color: orange; font-weight: bold;">
+        Overall Market: 20.58%
+      </div>
+      <div class="horizontal-line"></div>
+    </div>
+    <div style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm"><p>The chart illustrates net profit growth by sector in 2024 (YoY). Notably, Securities, Retail, and Tourism & Entertainment led the market with strong profit growth, significantly surpassing the overall market average of 20.58%. Other sectors such as IT, Utilities, and Basic Resources also posted positive but moderate gains. Meanwhile, several sectors hovered near zero growth, indicating stabilization. On the other hand, Real Estate, Personal Goods, and especially Construction & Materials experienced negative profit growth, with the latter showing the sharpest decline. This suggests a clear divergence in performance, where growth is concentrated in consumer-driven and financial sectors, while property-related and discretionary sectors continue to face major headwinds.</p>
+  </div>
+</div>
+</div>
+<!-- Trang 4 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <div class="market3" style = "margin-right: 0.5cm;">
+    <h2 style = "text-align: right;">Figure 4: Net Profit Contribution Chart for 2023 and 2024</h2>
+    <div class="horizontal-line"></div>
+    <div class="chart-container">
+      <canvas id="donutChart" style = "margin-top: -270px;"></canvas>
+    </div>
+    <div class="horizontal-line" style = "margin-top: 40px;"></div>
+  </div>
+  <div class = "part6" style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm">
+  </div>
+
+</div>
+<!-- Trang 6  -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+<div class="khoplenh">
+  <h2 style = "text-align: right; font-size: 18px;">Figure 5: Net buying/selling (Matched orders)</h2>
+  <div class="horizontal-line"></div>
+  <div class="chart-container">
+    <canvas id="chartKhopLenh"></canvas>
+    <div class="horizontal-line"></div>
+  </div>
+  <h2 style = "text-align: right; font-size: 18px;">Figure 6: Net buying/selling (Negotiated trades)</h2>
+  <div class="horizontal-line"></div>
+  <div class="chart-container">
+    <canvas id="chartThoaThuan"></canvas>
+    <div class="horizontal-line"></div>
+  </div>
+</div>
+</div>
+<!-- Trang 5 -->
+  <div class = "page">
+    <div class = "header-page">
+    <img src = "UEL.png">
+    <div class="header-report-info">
+      Analytical report | <span class="Symbol"></span>
+    </div>
+    </div>
+  <div class="market4">
+    <h2 style = "text-align: right; margin-right: 16px;">Table 1: Revenue and Net Profit Growth by Sector
+    </h2>
+    <table id="growthTable" style = "margin-left: 0.5cm;">
+      <thead>
+        <tr>
+          <th rowspan="2" style="width: 180px;">Sector</th>
+          <th colspan="4">Annual Net Revenue Growth (YoY, %)</th>
+          <th colspan="4">Annual Net Profit Growth (YoY, %)</th>
+        </tr>
+        <tr>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023</th>
+          <th>2024</th>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023</th>
+          <th>2024</th>
+        </tr>
+      </thead>
+      <!-- Thân bảng sẽ được chèn động qua JS -->
+    </table>
+    <div style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm"><p>The table shows sector growth from 2021 to 2024. In 2024, IT, Retail, and Food & Beverage led with strong profit gains. Real Estate and Banking showed signs of recovery, while Utilities stabilized. In contrast, Oil & Gas and Telecommunications saw sharp profit declines, especially Oil & Gas with a -1432.77% drop. The data highlights a widening gap between thriving consumer-driven sectors and struggling ones facing structural challenges.</p>
+  </div>
+</div>
+</div>
+
+<!-- TRANG 3 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <h3 style="color: #144E8C; margin-left: 9.5cm; margin-top: 40px; font-size: 19px; text-align:left; margin-bottom: 2px;">
+    Financial highlights
+  </h3>
+  <div class = "financialAnalysis" style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm">
+  </div>
+  <!-- Chèn 2 biểu đồ song song -->
+  <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+    <!-- Biểu đồ thứ nhất (Hình 2) -->
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600; text-align: right;">
+        <i>Figure 1: Net revenue growth</i>
+        <div class="horizontal-line"></div>
+      <canvas id="revenueChart" width="320" height="235" style="margin-top: 20px;"></canvas>
+      <div class="horizontal-line"></div>
+    </div>
+    <!-- <div style = "margin-top: 5px; margin-left:60%"><i>Nguồn: <span class = "Symbol"></span></i></div>   -->
+    </div>
+    <!-- Biểu đồ thứ hai (Hình 3) -->
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600;text-align: right;">
+        <i>Figure 2: Net profit growth</i>
+        <div class="horizontal-line"></div>
+        <canvas id="profitChart" width="320" height="235" style="display: block; margin:20px auto"></canvas>
+        <div class="horizontal-line" style="margin-top: -14px;"></div>  
+      </div>
+      <!-- <div style = "margin-top: 5px; margin-left:70%"><i>Nguồn: <span class = "Symbol"></span></i></div>   -->
+    </div>
+  </div>
+</div>
+<!-- TRANG 4 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <!-- 4 biểu đồ line chia thành 2 hàng, 2 cột -->
+  <div class="grid-container1" style = "margin-top: 20px;">
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600;text-align: right;">
+        <i>Figure 3: Gross Profit Margin (%)</i>
+        <div class="horizontal-line"></div>
+      </div>
+      <div class="chart-container1">
+        <canvas id="grossMarginChart"></canvas>
+      </div>
+      <div class="horizontal-line"></div>
+    </div>
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600;text-align: right;">
+        <i>Figure 4: Net Profit Margin (%)</i>
+        <div class="horizontal-line"></div>
+      </div>
+      <div class="chart-container1">
+        <canvas id="netMarginChart"></canvas>
+      </div>
+      <div class="horizontal-line"></div>
+    </div>
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600;text-align: right;">
+        <i>Figure 5: SG&A Expenses / Revenue (%)</i>
+        <div class="horizontal-line"></div>
+      </div>
+      <div class="chart-container1">
+        <canvas id="sgaRatioChart"></canvas>
+      </div>
+      <div class="horizontal-line"></div>
+    </div>
+    <div>
+      <div style="margin-top: 12px; color: #144E8C; font-weight: 600;text-align: right;">
+        <i>Figure 6: ROE (%)</i>
+        <div class="horizontal-line"></div>
+      </div>
+      <div class="chart-container1">
+        <canvas id="roeChart"></canvas>
+      </div>
+      <div class="horizontal-line"></div>
+    </div>
+  </div>
+  <div class = "fourchartAnalysis" style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm; margin-top: 20px;">
+  </div>
+</div>
+
+<!-- Trang 5 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <!-- Biểu đồ cột cho Nợ vay / VCSH -->
+  <div class="bar-chart-container1">
+    <div style="margin-top: -20px; color: #144E8C; font-weight: 600;text-align: right;">
+      <i>Figure 7: Debt / Equity (%)</i>
+      <div class="horizontal-line"></div>
+    </div>
+    <canvas id="debtEquityChart"></canvas>
+    <div class="horizontal-line"></div>
+  </div>
+  <div class = "debtAnalysis" style = "text-align: justify; margin: 12px;margin-left: 9.5cm; margin-right: 0.4cm; margin-top: -20px;">
+  </div>
+  <div class="finance-container">
+    <div class="finance-title" style = "margin-left: 250px; font-size: 17px; margin-top: -15px;">
+      Table 1: Summary of financial indicators and industry valuation
+    </div>
+    <table class="finance-table" id="financeTable">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Exchange</th>
+          <th>Revenue (VND Billion)</th>
+          <th>YoY (%) Revenue</th>
+          <th>Net Profit (VND Billion)</th>
+          <th>YoY (%) Profit</th>
+          <th>GPM (%)</th>
+          <th>Net Profit Margin (%)</th>
+          <th>ROE (%)</th>
+          <th>P/E</th>
+          <th>P/B</th>
+          <th>Marketcap (VND Billion)</th>
+          <th>Stock Price Change (%)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Trang 6 -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <h2 style="text-align:right; margin-right:20px; font-size: 18px; color:#144E8C; margin-top: 30px;">Table 2: Summary Income Statement</h2>
+
+  <!-- Bảng chính -->
+  <table class="financial-table">
+    <thead>
+      <tr>
+        <th>Income Statement Summary        </th>
+        <th>2024</th>
+        <th>2023</th>
+        <th>%YoY</th>
+      </tr>
+    </thead>
+  
+    <!-- Phần 1 -->
+    <tbody id="part1Body"></tbody>
+  
+    <!-- Phần 2 -->
+    <tbody id="part2Body"></tbody>
+  
+    <!-- Phần 3 -->
+    <tbody id="part3Body"></tbody>
+  
+    <!-- Phần 4 -->
+    <tbody id="part4Body"></tbody>
+  </table>
+
+</div>
+
+<!-- Trang phụ lục -->
+<div class = "page">
+  <div class = "header-page">
+  <img src = "UEL.png">
+  <div class="header-report-info">
+    Analytical report | <span class="Symbol"></span>
+  </div>
+  </div>
+  <div class="phu_luc">
+    <h2>Appendix 1</h2>
+  
+        <!-- Bảng CDKT -->
+    <table id="tableCDKT" style = "width: 19cm;">
+      <div><caption style ="text-align: right; font-size: 18px;">Table 1: Balance Sheet</caption></div>
+      <thead>
+        <tr>
+          <th>Chỉ tiêu</th>
+          <th>2020</th>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023</th>
+          <th>2024</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div style = "text-align: right;"><i>Unit: billion VND</i></div>
+  </div>
+</div>
+  <div class = "page">
+    <div class = "header-page">
+    <img src = "UEL.png">
+    <div class="header-report-info">
+      Analytical report | <span class="Symbol"></span>
+    </div>
+    </div>
+    <div class="phu_luc">
+      <h2>Appendix 2</h2>
+    <!-- Bảng KQKD -->
+    <table id="tableKQKD" style = "width: 19cm;">
+      <caption style ="text-align: right; font-size: 18px;">Table 2: Income Statement</caption>
+      <thead>
+        <tr>
+          <th>Chỉ tiêu</th>
+          <th>2020</th>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023</th>
+          <th>2024</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div style = "text-align: right;"><i>Unit: billion VND</i></div>
+
+  
+
+  
+    <!-- Bảng LCCT -->
+    <table id="tableLCCT"style = "width: 19cm; margin-top: 50px;">
+      <caption  style ="text-align: right; font-size: 18px;">Table 3: Cash Flow Statement</caption>
+      <thead>
+        <tr>
+          <th>Chỉ tiêu</th>
+          <th>2020</th>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023</th>
+          <th>2024</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div style = "text-align: right;"><i>Unit: billion VND</i></div>
+
+  </div>
+</div>
+
+<!-- Trang cuối -->
+<div class="page" style="position: relative; height: 1123px;"> <!-- ~ chiều cao A4 -->
+  <div class="header-page">
+    <img src="UEL.png">
+    <div class="header-report-info">
+      Analytical report | <span class="Symbol"></span>
+    </div>
+  </div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 50px; margin-bottom: 10px; color:#144E8C; font-weight: bold; font-size: 18px;">Disclaimer</div>
+  <div class="horizontal-line" style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 10px;"></div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 10px;">This report is automatically generated for each individual stock symbol, utilizing data sourced from reliable platforms including FiinPro-X and the open-source vnstock library. All financial figures, valuation metrics, technical analysis, and market data are extracted and processed by automated algorithms without manual intervention. As such, the report is intended for informational and reference purposes only and may contain inaccuracies or discrepancies compared to real-time or official data sources.</div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 5px; margin-bottom: 10px;">Users are advised to exercise caution and cross-check with official disclosures or financial reports before making any investment decisions. The author and the system bear no responsibility for any risks or losses incurred as a result of using the information provided in this report. By accessing and using this report, users acknowledge and accept the terms of this disclaimer in full.  </div>
+  <div class="horizontal-line" style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 10px;"></div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 20px; margin-bottom: 10px; color:#144E8C; font-weight: bold; font-size: 18px;">Acknowledgment</div>
+  <div class="horizontal-line" style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 10px;"></div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 0px;">I would like to express my sincere gratitude to Mr. Ngo Phu Thanh, MSc, lecturer of the course "Applied Software Package for Finance 1", for his dedicated teaching, valuable guidance, and for providing the essential knowledge and datasets that greatly supported the completion of this final project.  </div>
+  <div class="horizontal-line" style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 20px; margin-bottom: 10px;"></div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 20px; margin-bottom: 10px; color:#144E8C; font-weight: bold; font-size: 18px;">Information</div>
+  <div class="horizontal-line" style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 10px;"></div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 0px;"><b>Full name:</b> Nguyễn Hữu Kiên</div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 0px;"><b>Student ID:</b> K224141670</div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 0px;"><b>Phone:</b> (+84)357 093 416</div>
+  <div style = "text-align: justify; margin-left: 50px; margin-right: 50px; margin-top: 10px; margin-bottom: 0px;"><b>E-mail:</b> kiennh22414@st.uel.edu.vn</div>
+
+  <!-- Dải màu xanh ở cuối trang -->
+  <div style="
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: #144E8C;
+  "></div>
+</div>
+
+
+  <!-- Script JS để load dữ liệu JSON & Chart.js -->
+  <script>
+async function loadReport() {
+  try {
+    // Lấy dữ liệu JSON
+    const response = await fetch('data.json');
+    const data = await response.json();
+
+    // Lấy thông tin chung
+    const infor = data["Thông tin"];
+    const analysis = data["Phân tích"];
+    const financial_index = data["Chỉ số tài chính"];
+    const marketData = data["Dữ liệu thị trường"] || [];
+
+    // Xác định mã cổ phiếu động thay vì cố định "DBD"
+    const stockSymbols = Object.keys(marketData[0]).filter(key => key !== "date" && key !== "VNINDEX");
+    const stockSymbol = stockSymbols.length > 0 ? stockSymbols[0] : null;
+
+    if (!stockSymbol) {
+      console.error("Không tìm thấy mã cổ phiếu trong dữ liệu.");
+      return;
+    }
+
+    // Cập nhật DOM
+    document.getElementById("Name").textContent = infor["Tên"];
+    document.getElementById("Sector").textContent = infor["Ngành"];
+    document.getElementById("Exchange").textContent = infor["Sàn"];
+    document.querySelectorAll(".Symbol").forEach(function(el) {
+    el.textContent = infor["Mã cổ phiếu"];
+});
+    document.getElementById('report-date').textContent = "31/12/2024";
+    document.getElementById('recommendation').textContent = analysis["Khuyến nghị"] || "N/A";
+    document.getElementById('currentPrice').textContent = (analysis["Giá hiện tại"] * 1000).toLocaleString('en-US');
+    document.getElementById('Buy').textContent = analysis["Mua"];
+    document.getElementById('Hold').textContent = analysis["Nắm giữ"];
+    document.getElementById('Sell').textContent = analysis["Bán"];
+
+    document.getElementById("Quantity").textContent = (financial_index["Cổ phiếu đang lưu hành"] / 1000).toLocaleString('en-US');
+    document.getElementById("MarketCap").textContent = (financial_index["Vốn hóa"] / 1000).toLocaleString('en-US');
+    document.getElementById("Avg3m").textContent = financial_index["Khối lượng giao dịch trung bình 3 tháng"].toLocaleString('en-US');
+
+    var rawDateStr = infor["Ngày niêm yết"].replace(" tối", "");
+    var dateObj = new Date(rawDateStr);
+    document.getElementById("StartDate").textContent = dateObj.toLocaleDateString('vi-VN');
+
+    document.getElementById("EPS").textContent = (financial_index["EPS"] * 1000000).toLocaleString('en-US');
+    document.getElementById("BVPS").textContent = (financial_index["BVPS"] * 1000000).toLocaleString('en-US');
+    document.getElementById("DoE").textContent = (financial_index["DoE"] * 10).toFixed(2) + "%";
+    document.getElementById("ROA").textContent = (financial_index["ROA"] * 100).toFixed(2) + "%";
+    document.getElementById("ROE").textContent = (financial_index["ROE"] * 100).toFixed(2) + "%";
+    document.getElementById("PoE").textContent = financial_index["P/E"].toLocaleString('en-US');
+    document.getElementById("PoB").textContent = financial_index["P/B"].toLocaleString('en-US');
+
+    // Vẽ biểu đồ
+    const labels = marketData.map(item => item.date);
+    const dataVNINDEX = marketData.map(item => item.VNINDEX);
+    const dataStock = marketData.map(item => item[stockSymbol]);
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: stockSymbol,
+            data: dataStock,
+            borderColor: '#144E8C',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          },
+          {
+            label: 'VNINDEX',
+            data: dataVNINDEX,
+            borderColor: '#88cc66',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }
+        ]
+      },
+      options: {
+        scales: {
+          y: {
+            min: -20,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          },
+          x: {
+            type: 'time',
+            time: {
+              unit: 'month',
+              displayFormats: {
+                month: 'MMM-yy'
+              }
+            },
+            min: '2024-01-01',
+            max: '2024-12-31',
+            ticks: {
+              autoSkip: false,
+              maxTicksLimit: 12,
+              font: {
+                size:11
+              },
+            }
+          }
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi khi tải data.json:', error);
+  }
+}
+
+    // Gọi hàm khi trang load
+    loadReport();
+  </script>
+
+  <script>
+            // Giả sử file JSON của bạn có tên là data.json và được đặt cùng thư mục với file HTML này
+            fetch('data.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Lỗi khi tải file JSON: " + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Truy cập vào thuộc tính "Chatbot Analysis" trong file JSON
+                const chatbotAnalysis = data["Chatbot Analysis"];
+                // Hiển thị nội dung lên HTML
+                document.getElementById("companyOverview").innerText = chatbotAnalysis["Tổng quan công ty"];
+                document.querySelectorAll(".financialAnalysis").forEach(function(el) {
+    el.innerText = chatbotAnalysis["Phân tích doanh thu và lợi nhuận"];
+});
+                document.getElementById("hightlightInvestment").innerText =chatbotAnalysis["Điểm nhấn đầu tư"];
+                document.querySelectorAll(".fourchartAnalysis").forEach(function(el) {
+    el.innerText = chatbotAnalysis["Phân tích 4 chart"];
+});
+                document.querySelectorAll(".debtAnalysis").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích Nợ/VCSH"];
+                });
+                document.querySelectorAll(".part1").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 1"];
+                });
+                document.querySelectorAll(".part2").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 2"];
+                });                document.querySelectorAll(".part3").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 3"];
+                });                document.querySelectorAll(".part4").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 4"];
+                });
+                document.querySelectorAll(".part5").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 5"];
+                });
+                document.querySelectorAll(".part6").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 6"];
+                });
+                document.querySelectorAll(".part7").forEach(function(el) {
+                    el.innerText = chatbotAnalysis["Phân tích năm - Phần 7"];
+                });
+            })
+            .catch(error => {
+                console.error('Có lỗi khi tải file JSON:', error);
+            });
+  </script>
+<!-- Vẽ chart tài chính -->
+  <script>
+      async function fetchData() {
+          const response = await fetch("data.json"); // Load JSON file
+          const data = await response.json(); 
+
+          // Extract revenue data
+          const revenueData = data["Doanh thu thuần"];
+          const profitData = data["Lợi nhuận sau thuế"];
+
+          const labels = revenueData.map(item => item.year);
+          const revenueValues = revenueData.map(item => parseFloat(item.revenue));
+          const revenueGrowth = revenueData.map(item => item.growth !== undefined ? item.growth : null);
+
+          const profitValues = profitData.map(item => parseFloat(item.profit));
+          const profitGrowth = profitData.map(item => item.growth !== undefined ? item.growth : null);
+
+          createChart("revenueChart", labels, revenueValues, revenueGrowth, "Revenue (VND Billion)", "YoY (%)");
+          createChart("profitChart", labels, profitValues, profitGrowth, "Profit (VND Billion)", "YoY (%)");
+      }
+
+      function createChart(canvasId, labels, barData, lineData, barLabel, lineLabel) {
+          const ctx = document.getElementById(canvasId).getContext("2d");
+
+          new Chart(ctx, {
+              type: "bar",
+              data: {
+    labels: labels,
+    datasets: [
+        {
+            label: lineLabel,
+            data: lineData,
+            borderColor: "#d7b61e",
+            backgroundColor: "#d7b61e",
+            type: "line",
+            fill: false,
+            tension: 0.4,
+            yAxisID: "y1",
+            order: 1 // Đảm bảo line vẽ trên cùng
+            
+        },
+        {
+            label: barLabel,
+            data: barData,
+            backgroundColor: "#144E8C",
+            yAxisID: "y",
+            order: 2 // Đảm bảo cột vẽ dưới đường line
+        }
+    ],
+},
+
+              options: {
+                  responsive: true,
+                  plugins: {
+                      legend: {
+                          display: true,
+                          position: "bottom"
+                      }
+                  },
+                  scales: {
+                      y: {
+                          beginAtZero: true,
+                          title: {
+                              display: true,
+                              text: barLabel
+                          }
+                      },
+                      y1: {
+                          position: "right",
+                          beginAtZero: true,
+                          title: {
+                              display: true,
+                              text: lineLabel
+                          },
+                          grid: {
+                              drawOnChartArea: true,
+                          }
+                      },
+                      x: {
+                          title: {
+                              display: true,
+                          }
+                      }
+                  },
+              }
+          });
+      }
+
+      fetchData();
+  </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("data.json") // Thay bằng đường dẫn file JSON của bạn
+        .then(response => response.json())
+        .then(data => {
+            const stockData = data["Biến động giá"];
+
+            // Lọc bỏ những ngày không có giao dịch (giá hoặc volume đều null)
+            const filteredData = stockData.filter(item => item["Khối lượng"] > 0 || item["Giá"] !== null);
+
+            // Lấy danh sách ngày sau khi đã lọc
+            const prices = filteredData.map(item => item["Giá"]);
+            const volumes = filteredData.map(item => item["Khối lượng"] / 1_000_000); // Chuyển sang triệu
+                        // Chuyển đổi định dạng ngày về dạng "MMM-YYYY" (Jan-2024, Feb-2024)
+                        const labels = filteredData.map(item => {
+                const date = new Date(item["Ngày"]);
+                return date.toLocaleString("en-US", { month: "short", year: "numeric" }).replace(" ", "-");
+            });
+
+            // Tạo canvas context
+            const ctx = document.getElementById("stock_chart").getContext("2d");
+
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: "line",
+                            label: "Price",
+                            data: prices,
+                            borderColor: "#144E8C", // Đỏ đậm
+                            borderWidth: 2,
+                            pointRadius: 0, // Không hiển thị điểm
+                            fill: false,
+                            spanGaps: true,  // Nối liền khoảng trống
+                            yAxisID: "y-axis-price"
+                        },
+                        {
+                            type: "bar",
+                            label: "Volume",
+                            data: volumes,
+                            backgroundColor: "rgba(54, 162, 235, 0.7)", // Xanh dương
+                            borderWidth: 0,
+                            barThickness: 6, // Mỏng hơn
+                            yAxisID: "y-axis-volume"
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 5, bottom: 5 }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "top",
+                            labels: { boxWidth: 20, font: { size: 12} }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: "category",  // Không dùng time scale để tránh khoảng trống
+                            ticks: { font: { size: 10 }, autoSkip: true, maxTicksLimit: 11}
+                        },
+                      "y-axis-price": {
+                          type: "linear",
+                          position: "right",
+                          title: { display: true, text: "Price (VND)", font: { size: 12 } },
+                          grid: { drawOnChartArea: false },
+                          beginAtZero: false,
+                      },
+                      "y-axis-volume": {
+                          type: "linear",
+                          position: "left",
+                          title: { display: true, text: "Volume (million)", font: { size: 12 } },
+                          beginAtZero: true,
+                      }
+
+                    }
+                }
+            });
+        })
+        .catch(error => console.error("Lỗi khi tải dữ liệu JSON:", error));
+});
+
+</script>
+
+<script>
+  // Màu dành cho target và peers:
+  const targetLineColor = "#FFC107";   // Màu vàng cho target (line charts)
+  // Mảng màu xanh dương với sắc độ giảm dần cho 4 peers
+  const peerBlueColors = ["#003366", "#004080", "#004d99", "#0059b3"];
+
+  const targetBarColor = "#FFC107";      // Màu vàng cho target (bar chart)
+  const peerBarColor = "#144E8C";        // Màu xanh cho các peer trong bar chart
+
+  // Hàm tiện ích: Lấy các năm chung từ target và peers (top4), rồi sắp xếp
+  function getAllYears(targetData, peerDataObj) {
+    const yearSet = new Set();
+    targetData.forEach(d => yearSet.add(d.year));
+    for (const peer in peerDataObj) {
+      peerDataObj[peer].forEach(d => yearSet.add(d.year));
+    }
+    return Array.from(yearSet).sort((a, b) => a - b);
+  }
+
+  // Hàm tiện ích: Map dữ liệu theo các năm đã sắp xếp
+  function mapDataToYears(dataArray, sortedYears, metric) {
+    const yearToValue = {};
+    dataArray.forEach(item => {
+      yearToValue[item.year] = item[metric];
+    });
+    return sortedYears.map(y => (yearToValue[y] !== undefined ? yearToValue[y] : null));
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch("data.json")
+      .then(res => res.json())
+      .then(jsonData => {
+        // Lấy đối tượng "Financial Indicators"
+        const finIndicators = jsonData["Financial Indicators"];
+        // Xác định target symbol bằng cách lọc key khác "peer_companies"
+        const targetSymbols = Object.keys(finIndicators).filter(key => key !== "peer_companies");
+        if (targetSymbols.length === 0) {
+          console.error("Không tìm thấy target symbol trong JSON");
+          return;
+        }
+        const targetSymbol = targetSymbols[0];
+
+        // Lấy dữ liệu target và peer companies
+        const targetData = finIndicators[targetSymbol] || [];
+        const top4Data = finIndicators.peer_companies?.top4 || {};
+        const top9DebtData = finIndicators.peer_companies?.top9_debt || {};
+
+        // ---- Vẽ biểu đồ line cho 4 chỉ số ----
+        const allYears = getAllYears(targetData, top4Data);
+
+        function drawLineChart(canvasId, metric, yAxisLabel) {
+          const ctx = document.getElementById(canvasId).getContext("2d");
+          // Dataset cho target (với màu vàng)
+          const targetValues = mapDataToYears(targetData, allYears, metric);
+          const datasets = [{
+            label: targetSymbol,
+            data: targetValues,
+            borderColor: targetLineColor,
+            backgroundColor: targetLineColor,
+            fill: false,
+            tension: 0.1,
+            borderWidth: 2
+          }];
+
+          // Dataset cho từng peer: dùng peerBlueColors với sắc độ giảm dần
+          let peerIndex = 0;
+          for (const peer in top4Data) {
+            const peerValues = mapDataToYears(top4Data[peer], allYears, metric);
+            const color = peerBlueColors[peerIndex % peerBlueColors.length];
+            datasets.push({
+              label: peer,
+              data: peerValues,
+              borderColor: color,
+              backgroundColor: color,
+              fill: false,
+              tension: 0.1,
+              borderWidth: 1
+            });
+            peerIndex++;
+          }
+
+          new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: allYears,
+              datasets: datasets
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: "top" }
+              },
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  title: { display: true, text: yAxisLabel }
+                }
+              }
+            }
+          });
+        }
+
+        // Vẽ 4 biểu đồ line
+        drawLineChart("grossMarginChart", "gross_margin", "Gross Profit (%)");
+        drawLineChart("netMarginChart", "net_margin", "Net Profit (%)");
+        drawLineChart("sgaRatioChart", "sg_a_ratio", "SG&A/Revenue (%)");
+        drawLineChart("roeChart", "ROE", "ROE (%)");
+
+        // ---- Vẽ biểu đồ bar cho Nợ vay/VCSH ----
+        // Chọn năm mới nhất dựa trên dữ liệu target
+        const targetYearsArr = targetData.map(d => d.year);
+        const lastYear = Math.max(...targetYearsArr);
+
+        // Gom dữ liệu từ top9 và target cho năm lastYear
+        const barData = [];
+        for (const peer in top9DebtData) {
+          const found = top9DebtData[peer].find(item => item.year === lastYear);
+          if (found) {
+            barData.push({ company: peer, value: found.debt_to_equity, isTarget: false });
+          }
+        }
+        const targetFound = targetData.find(item => item.year === lastYear);
+        if (targetFound) {
+          barData.push({ company: targetSymbol, value: targetFound.debt_to_equity, isTarget: true });
+        }
+        // Sắp xếp giảm dần theo giá trị
+        barData.sort((a, b) => b.value - a.value);
+
+        const barLabels = barData.map(item => item.company);
+        const barValues = barData.map(item => item.value);
+        const barColors = barData.map(item => item.isTarget ? targetBarColor : peerBarColor);
+
+        const ctxBar = document.getElementById("debtEquityChart").getContext("2d");
+        new Chart(ctxBar, {
+          type: "bar",
+          data: {
+            labels: barLabels,
+            datasets: [{
+              label: `Debt/Equity (%) in ${lastYear}`,
+              data: barValues,
+              backgroundColor: barColors
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "top" }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Debt/Equity (%)" }
+              }
+            }
+          }
+        });
+
+      })
+      .catch(err => console.error("Lỗi khi tải JSON:", err));
+  });
+</script>
+<script>
+  // Dữ liệu mô tả các chỉ tiêu cho từng phần
+  // label: nội dung hiển thị (có thể dùng HTML <b> </b> <i> </i>)
+  // key: tên trong "Yearly summary"
+  const part1 = [
+    { label: "<b style='color: #144E8C;'>Net revenue</b>", key: "Doanh thu thuần" },
+    { label: "Sales expenses", key: "Chi phí bán hàng" },
+    { label: "General and Administrative Expenses", key: "Chi phí quản lý doanh nghiệp" },
+    { label: "SG&A Expenses to Net Revenue (%)", key: "Chi phí bh&qldn / DTT (%)" }
+  ];
+
+  const part2 = [
+    { label: "<b style='color: #144E8C;'>Gross Profit</b>", key: "Lợi nhuận gộp" },
+    { label: "<b style='color: #144E8C;'>Gross Profit Margin (%)</b>", key: "Biên lợi nhuận gộp (%)" }
+  ];
+
+  const part3 = [
+    { label: "<b style='color: #144E8C;'>Financial Income</b>", key: "Doanh thu hoạt động tài chính" },
+    { label: "<b style='color: #144E8C;'>Financial Expenses</b>", key: "Chi phí tài chính" },
+    { label: "<i>In which: Interest Expenses</i>", key: "Chi phí lãi vay" }
+  ];
+
+  const part4 = [
+    { label: "<b style='color: #144E8C;'>Profit Before Tax (PBT)</b>", key: "Lợi nhuận trước thuế" },
+    { label: "<b style='color: #144E8C;'>Profit Attributable to Parent Company</b>", key: "LNST công ty mẹ" },
+    { label: "<b style='color: #144E8C;'>Net Profit Margin (%)</b>", key: "Biên lợi nhuận ròng (%)" }
+  ];
+
+  // Hàm tiện ích format số
+  function formatNumber(val) {
+    if (typeof val === "number") {
+      return val.toFixed(2);
+    }
+    return val;
+  }
+
+  // Tạo hàm để sinh ra các dòng cho 1 part (không gồm dòng nhận xét)
+  function buildPartRows(partData, yearlySummary) {
+    const rows = [];
+    partData.forEach(item => {
+      const tr = document.createElement("tr");
+
+      // Cột Chỉ tiêu
+      const tdLabel = document.createElement("td");
+      tdLabel.className = "label-col";
+      tdLabel.innerHTML = item.label; // Dùng innerHTML để render <b>, <i>
+      tr.appendChild(tdLabel);
+
+      // Cột 2024 (current)
+      let currentVal = "";
+      if (yearlySummary[item.key] && yearlySummary[item.key].current !== undefined) {
+        currentVal = formatNumber(yearlySummary[item.key].current);
+      }
+      const tdCurrent = document.createElement("td");
+      tdCurrent.textContent = currentVal;
+      tr.appendChild(tdCurrent);
+
+      // Cột 2023 (previous)
+      let previousVal = "";
+      if (yearlySummary[item.key] && yearlySummary[item.key].previous !== undefined) {
+        previousVal = formatNumber(yearlySummary[item.key].previous);
+      }
+      const tdPrevious = document.createElement("td");
+      tdPrevious.textContent = previousVal;
+      tr.appendChild(tdPrevious);
+
+      // Cột %vck (yoy)
+      let yoyVal = "";
+      if (yearlySummary[item.key] && yearlySummary[item.key].yoy !== null && yearlySummary[item.key].yoy !== undefined) {
+        yoyVal = yearlySummary[item.key].yoy + "%";
+      }
+      const tdYoy = document.createElement("td");
+      tdYoy.textContent = yoyVal;
+      tr.appendChild(tdYoy);
+
+      rows.push(tr);
+    });
+    return rows;
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch("data.json")
+      .then(res => res.json())
+      .then(data => {
+        const yearlySummary = data["Yearly summary"] || {};
+        const chatbotAnalysis = data["Chatbot Analysis"] || {};
+
+        // PART 1
+        const part1Body = document.getElementById("part1Body");
+        const part1Rows = buildPartRows(part1, yearlySummary);
+        part1Rows.forEach(r => part1Body.appendChild(r));
+        // Dòng nhận xét
+        const commentRow1 = document.createElement("tr");
+        commentRow1.className = "comment-row";
+        const tdComment1 = document.createElement("td");
+        tdComment1.colSpan = 4; // gộp 4 cột
+        tdComment1.innerText = chatbotAnalysis["Phân tích năm - Phần 1"] || "";
+        commentRow1.appendChild(tdComment1);
+        part1Body.appendChild(commentRow1);
+
+        // PART 2
+        const part2Body = document.getElementById("part2Body");
+        const part2Rows = buildPartRows(part2, yearlySummary);
+        part2Rows.forEach(r => part2Body.appendChild(r));
+        // Dòng nhận xét
+        const commentRow2 = document.createElement("tr");
+        commentRow2.className = "comment-row";
+        const tdComment2 = document.createElement("td");
+        tdComment2.colSpan = 4;
+        tdComment2.innerText = chatbotAnalysis["Phân tích năm - Phần 2"] || "";
+        commentRow2.appendChild(tdComment2);
+        part2Body.appendChild(commentRow2);
+
+        // PART 3
+        const part3Body = document.getElementById("part3Body");
+        const part3Rows = buildPartRows(part3, yearlySummary);
+        part3Rows.forEach(r => part3Body.appendChild(r));
+        // Dòng nhận xét
+        const commentRow3 = document.createElement("tr");
+        commentRow3.className = "comment-row";
+        const tdComment3 = document.createElement("td");
+        tdComment3.colSpan = 4;
+        tdComment3.innerText = chatbotAnalysis["Phân tích năm - Phần 3"] || "";
+        commentRow3.appendChild(tdComment3);
+        part3Body.appendChild(commentRow3);
+
+        // PART 4
+        const part4Body = document.getElementById("part4Body");
+        const part4Rows = buildPartRows(part4, yearlySummary);
+        part4Rows.forEach(r => part4Body.appendChild(r));
+        // Dòng nhận xét
+        const commentRow4 = document.createElement("tr");
+        commentRow4.className = "comment-row";
+        const tdComment4 = document.createElement("td");
+        tdComment4.colSpan = 4;
+        tdComment4.innerText = chatbotAnalysis["Phân tích năm - Phần 4"] || "";
+        commentRow4.appendChild(tdComment4);
+        part4Body.appendChild(commentRow4);
+      })
+      .catch(err => console.error("Lỗi khi tải JSON:", err));
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Giả sử file JSON tên "data.json"
+    fetch("data.json")
+      .then(res => res.json())
+      .then(jsonData => {
+        // Dữ liệu: { "Sector summary": { "Summary_sector": [...], "mean": {...}, "median": {...} } }
+        const sectorSummary = jsonData["Sector summary"] || {};
+        const summaryList = sectorSummary["Summary_sector"] || [];
+        const meanData = sectorSummary["mean"] || {};
+        const medianData = sectorSummary["median"] || {};
+  
+        const tableBody = document.getElementById("tableBody");
+  
+        // Danh sách cột, theo thứ tự
+        const columns = [
+          { key: "Mã", class: "left-col" },
+          { key: "Sàn", class: "left-col" },
+          { key: "Doanh thu 2024 (tỷ)" },
+          { key: "Tăng yoy Doanh thu (%)" },
+          { key: "Lợi nhuận 2024 (tỷ)" },
+          { key: "Tăng yoy Lợi nhuận (%)" },
+          { key: "GPM (%)" },
+          { key: "Biên LN ròng (%)" },
+          { key: "ROE (%)" },
+          { key: "P/E" },
+          { key: "P/B" },
+          { key: "Vốn hóa (tỷ đồng)" },
+          { key: "Thay đổi giá cổ phiếu (%)" }
+        ];
+  
+        // Hàm tiện ích tạo ô <td>
+        function createCell(content, extraClass = "") {
+          const td = document.createElement("td");
+          if (extraClass) td.classList.add(extraClass);
+          td.textContent = content != null ? content : "";
+          return td;
+        }
+  
+        // 1) Tạo dòng cho từng object trong "Summary_sector"
+        summaryList.forEach((item, index) => {
+          const tr = document.createElement("tr");
+          columns.forEach(col => {
+            const val = item[col.key];
+            tr.appendChild(createCell(val, col.class || ""));
+          });
+          tableBody.appendChild(tr);
+        });
+  
+        // 2) Tạo dòng "Trung bình"
+        if (Object.keys(meanData).length > 0) {
+          const trMean = document.createElement("tr");
+          trMean.classList.add("stats-row");
+          columns.forEach((col, idx) => {
+            if (idx === 0) {
+              // cột đầu => "Trung bình"
+              trMean.appendChild(createCell("Mean", "left-col"));
+            } else if (idx === 1) {
+              // cột sàn => trống
+              trMean.appendChild(createCell("", "left-col"));
+            } else {
+              const val = meanData[col.key] != null ? meanData[col.key] : "";
+              trMean.appendChild(createCell(val));
+            }
+          });
+          tableBody.appendChild(trMean);
+        }
+  
+        // 3) Tạo dòng "Trung vị"
+        if (Object.keys(medianData).length > 0) {
+          const trMedian = document.createElement("tr");
+          trMedian.classList.add("stats-row");
+          columns.forEach((col, idx) => {
+            if (idx === 0) {
+              trMedian.appendChild(createCell("Median", "left-col"));
+            } else if (idx === 1) {
+              trMedian.appendChild(createCell("", "left-col"));
+            } else {
+              const val = medianData[col.key] != null ? medianData[col.key] : "";
+              trMedian.appendChild(createCell(val));
+            }
+          });
+          tableBody.appendChild(trMedian);
+        }
+  
+        // Tô màu xanh nhạt, in đậm cho hàng đầu tiên
+        // (nếu bạn muốn chắc chắn "MÃ ĐẦU TIÊN" => index 0)
+        const firstDataRow = tableBody.querySelector("tr");
+        if (firstDataRow) {
+          firstDataRow.style.backgroundColor = "#E3F7E3";
+          firstDataRow.style.fontWeight = "bold";
+        }
+  
+      })
+      .catch(err => console.error("Lỗi khi tải JSON:", err));
+  });
+  </script>
+<!-- Market1 -->
+<script>
+  // Lấy dữ liệu từ file data.json nằm cùng thư mục
+  fetch("data.json")
+    .then(response => response.json())
+    .then(data => {
+      // Giả sử cấu trúc JSON có key "calc_profit_growth_by_sector_data"
+      const jsonData = data["calc_profit_growth_by_sector_data"];
+      // Các năm (trục X)
+      const years = ["2021", "2022", "2023", "2024"];
+      // Tách dữ liệu cho từng nhóm
+      const totalMarket = years.map(year => jsonData["Toàn thị trường"][year]);
+      const financial = years.map(year => jsonData["Tài chính"][year]);
+      const nonFinancial = years.map(year => jsonData["Phi tài chính"][year]);
+
+      // Vẽ biểu đồ với Chart.js
+      const ctx = document.getElementById("marketChart").getContext("2d");
+      const marketChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: "Overall Market",
+              data: totalMarket,
+              borderColor: "#144E8C", // xanh đậm
+              backgroundColor: "rgba(20,78,140,0.1)",
+              fill: false,
+              tension: 0.4
+            },
+            {
+              label: "Financials",
+              data: financial,
+              borderColor: "#ff9900", // cam
+              backgroundColor: "rgba(255,153,0,0.1)",
+              fill: false,
+              tension: 0.4
+            },
+            {
+              label: "Non-Financials",
+              data: nonFinancial,
+              borderColor: "#3cba54", // xanh lá
+              backgroundColor: "rgba(60,186,84,0.1)",
+              fill: false,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ": " + context.parsed.y + "%";
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Growth (%)"
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + "%";
+                }
+              }
+            }
+          }
+        }
+      });
+    })
+    .catch(error => console.error("Lỗi khi tải dữ liệu JSON:", error));
+</script>
+<!-- Market2 -->
+<script>
+  // Đọc dữ liệu từ file data.json
+  fetch("data.json")
+    .then(response => response.json())
+    .then(data => {
+      // Lấy object { Ngành: % } từ "calc_yoy_growth_2024_by_icb2_data"
+      const yoyData = data["calc_yoy_growth_2024_by_icb2_data"];
+      const refLineValue = yoyData["Toàn thị trường"];
+
+      // Tạo mảng để sắp xếp
+      const arr = Object.entries(yoyData).map(([sector, val]) => {
+        return { sector, value: val };
+      });
+
+      // Sắp xếp giảm dần (val lớn nhất -> nhỏ nhất)
+      arr.sort((a, b) => b.value - a.value);
+
+      // Tách labels và data
+      let labels = arr.map(item => item.sector);
+      let values = arr.map(item => item.value);
+
+      // Nếu muốn xuống dòng theo khoảng trắng:
+      // thay thế ' ' bằng '\n' cho mỗi label
+      labels = labels.map(lbl => lbl.replace(/\s+/g, '\n'));
+
+      // Màu cột dương = xanh, âm = vàng (theo code gốc của bạn)
+      const backgroundColors = values.map(val =>
+        val >= 0 ? "#0099FF" : "#Ffd700"
+      );
+      const borderColors = values.map(val =>
+        val >= 0 ? "#0099FF" : "#Ffd700"
+      );
+
+      // Khởi tạo biểu đồ
+      const ctx = document.getElementById("icb2Chart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Tăng trưởng (%)",
+            data: values,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+  responsive: true,
+  maintainAspectRatio: false,
+  indexAxis: 'x',  // cột đứng
+  plugins: {
+    title: {
+      display: false,
+      text: "Tăng trưởng LNST năm 2024 (YoY)"
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context) {
+          const val = context.parsed.y;
+          return context.dataset.label + ": " + val.toFixed(2) + "%";
+        }
+      }
+    },
+    legend: {
+      display: false  // Ẩn hoàn toàn ô chú thích (legend box)
+    },
+    annotation: {
+      annotations: {
+        refLine: {
+          type: 'line',
+          scaleID: 'y',
+          value: refLineValue,
+          borderColor: 'orange',
+          borderWidth: 2,
+          borderDash: [6, 6],
+          label: {
+            enabled: true,
+            content: 'Toàn thị trường: ' + refLineValue.toFixed(2) + '%',
+            position: 'start',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            color: 'orange',
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    },
+    datalabels: {
+      anchor: 'end',
+      align: 'start',
+      formatter: (val) => val.toFixed(2) + '%',
+      color: '#144E8C',
+      font: { size: 8 }
+    }
+  },
+  scales: {
+    x: {
+      title: {
+        display: true,
+      },
+      grid: {
+        display: false  // ẩn đường lưới trục x nếu muốn
+      }
+    },
+    y: {
+      display: false  // ẩn hoàn toàn trục y
+    }
+  }
+},
+        plugins: [ChartDataLabels]  // Kích hoạt plugin datalabels
+      });
+    })
+    .catch(err => console.error("Lỗi khi tải data.json:", err));
+</script>
+<!-- Market3 -->
+<script>
+  // Hàm gộp các ngành còn lại thành "Các ngành khác" theo top N,
+  // dựa trên giá trị năm 2024 để sắp xếp (giảm dần).
+  function groupTopNBy2024(obj2023, obj2024, topN=10) {
+    // 1) Tạo mảng [sector, val24]
+    const arr2024 = Object.entries(obj2024).map(([sec, val]) => ({ sector: sec, val24: val }));
+    // 2) Sắp xếp giảm dần theo val24
+    arr2024.sort((a, b) => b.val24 - a.val24);
+
+    // 3) Lấy top N => mảng topSectors
+    const topSectors = arr2024.slice(0, topN).map(item => item.sector);
+
+    // 4) Gộp phần còn lại vào "Các ngành khác"
+    const new2023 = {};
+    const new2024 = {};
+    let others23 = 0;
+    let others24 = 0;
+
+    // Duyệt toàn bộ ngành có trong obj2024 (nếu 2023 thiếu => 0)
+    const allSectors = Object.keys(obj2024);
+
+    // Xử lý logic gộp
+    allSectors.forEach(sec => {
+      const val23 = obj2023[sec] || 0;
+      const val24 = obj2024[sec] || 0;
+      if (topSectors.includes(sec)) {
+        new2023[sec] = val23;
+        new2024[sec] = val24;
+      } else {
+        others23 += val23;
+        others24 += val24;
+      }
+    });
+
+    // Thêm "Các ngành khác"
+    new2023["Các ngành khác"] = others23;
+    new2024["Các ngành khác"] = others24;
+
+    // => Lúc này new2023, new2024 có top N + "Các ngành khác"
+    // => Ta cần tạo mảng finalSectors theo đúng thứ tự top N + "Các ngành khác"
+    // Từ arr2024 (topN) => sắp xếp xong => cắt => => push "Các ngành khác"
+    const sortedSectors = arr2024.slice(0, topN).map(item => item.sector);
+    sortedSectors.push("Các ngành khác"); // thêm vào cuối
+
+    return { new2023, new2024, sortedSectors };
+  }
+
+  // Hàm tạo mảng màu tĩnh (hoặc random)
+  function createColors(length) {
+    // Mảng màu cơ bản
+    const baseColors = [
+      "#3399FF","#ff9900","#3cba54","#9c27b0","#e91e63",
+      "#CC9900","#ffc107","#795548","#607d8b","#4caf50","#9e9e9e"
+    ];
+    // Nếu chưa đủ thì random
+    while (baseColors.length < length) {
+      baseColors.push("#"+Math.floor(Math.random()*16777215).toString(16));
+    }
+    return baseColors.slice(0, length);
+  }
+
+  fetch("data.json")
+    .then(res => res.json())
+    .then(data => {
+      // Lấy object {2023: {...}, 2024: {...}}
+      const shareData = data["calc_icb2_profit_share_2023_2024_data"];
+      const obj2023 = shareData["2023"];
+      const obj2024 = shareData["2024"];
+
+      // Gộp theo top 10 dựa trên năm 2024
+      const { new2023, new2024, sortedSectors } = groupTopNBy2024(obj2023, obj2024, 10);
+
+      // Tạo mảng data
+      const data2023 = sortedSectors.map(sec => new2023[sec]);
+      const data2024 = sortedSectors.map(sec => new2024[sec]);
+
+      // Tạo màu => 1 mảng color
+      const colorArray = createColors(sortedSectors.length);
+
+      const ctx = document.getElementById("donutChart").getContext("2d");
+      new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: sortedSectors,
+          datasets: [
+            // dataset[0] => 2023 => vòng trong
+            {
+              label: "2023",
+              data: data2023,
+              backgroundColor: colorArray,
+              borderWidth: 1,
+              weight: 1
+            },
+            // dataset[1] => 2024 => vòng ngoài
+            {
+              label: "2024",
+              data: data2024,
+              backgroundColor: colorArray,
+              borderWidth: 1,
+              weight: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "35%",  // donut
+          plugins: {
+            title: {
+              display: true,
+            },
+            legend: {
+              position: "right"
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  // "2023" or "2024", sector name, value
+                  const dsLabel = context.dataset.label; 
+                  const sector = context.label;
+                  const val = context.parsed;
+                  return `${sector} (${dsLabel}): ${val.toFixed(2)}%`;
+                }
+              }
+            },
+            datalabels: {
+              // Tùy biến hiển thị nhãn cho 2 dataset
+              // datasetIndex=0 => 2023 => hiển thị bên trong (màu trắng)
+              // datasetIndex=1 => 2024 => hiển thị bên ngoài (màu xanh đậm)
+              formatter: (val) => val.toFixed(2) + "%",
+              color: function(ctx) {
+                // datasetIndex=1 => màu xanh đậm, 0 => màu trắng
+                return ctx.datasetIndex === 1 ? "#fff" : "#144E8C";
+              },
+              anchor: function(ctx) {
+                // datasetIndex=1 => hiển thị outside, 0 => inside
+                return ctx.datasetIndex === 0 ? "end" : "center";
+              },
+              align: function(ctx) {
+                // datasetIndex=1 => hiển thị outside, 0 => inside
+                return ctx.datasetIndex === 1 ? "end" : "center";
+              },
+              offset: function(ctx) {
+                // datasetIndex=1 => offset 10px, 0 => 0
+                return ctx.datasetIndex === 1 ? 10 : 0;
+              },
+              font: function(ctx) {
+                // datasetIndex=1 => size 12, 0 => size 10
+                return {
+                  size: ctx.datasetIndex === 1 ? 10 : 12
+                };
+              },
+              display: function(ctx) {
+                // Ẩn nhãn nếu quá nhỏ, ví dụ < 1%
+                const val = ctx.dataset.data[ctx.dataIndex];
+                return val > 1;
+              }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    })
+    .catch(err => console.error("Lỗi:", err));
+</script>
+<!-- Market4 -->
+<script>
+  // Hàm tô màu ô theo 4 mức (xanh lá, vàng, cam, đỏ)
+  function getCellColor(value) {
+    // Bạn tùy chỉnh ngưỡng
+    if (value >= 50) {
+      // xanh lá
+      return "background-color: #62BD7A;";
+    } else if (value >= 20) {
+      // vàng
+      return "background-color: #FFEB84;";
+    } else if (value >= 0) {
+      // cam
+      return "background-color: #FBB679;";
+    } else {
+      // đỏ
+      return "background-color: #F8696B;";
+    }
+  }
+  
+  // Hàm xác định lớp màu nhóm (cho tr class="group-header X")
+  function getGroupClass(groupName) {
+    // so sánh chuỗi (không phân biệt hoa/thường)
+    const name = groupName.toLowerCase();
+    if (name === "tăng trưởng") return "thang-truong";
+    if (name === "hồi phục") return "hoi-phuc";
+    if (name === "tạo đáy") return "tao-day";
+    if (name === "suy yếu") return "suy-yeu";
+    return "";
+  }
+  
+  // Hàm tạo một <tbody> với tiêu đề nhóm
+  function createGroupSection(groupName, dataObj, groupSectors) {
+    // groupSectors = danh sách ngành
+    // dataObj = { "Bán lẻ": {RevenueGrowth: {...}, LNSTGrowth: {...}}, ... }
+    
+    const groupClass = getGroupClass(groupName);
+    let html = `
+      <tbody>
+        <tr class="group-header ${groupClass}">
+          <th colspan="9">${groupName.toUpperCase()}</th>
+        </tr>
+    `;
+  
+    groupSectors.forEach(sector => {
+      const sectorData = dataObj[sector];
+      if (!sectorData) return;
+      const rev = sectorData.RevenueGrowth || {};
+      const lnst = sectorData.LNSTGrowth || {};
+  
+      const r2021 = rev[2021] ?? 0;
+      const r2022 = rev[2022] ?? 0;
+      const r2023 = rev[2023] ?? 0;
+      const r2024 = rev[2024] ?? 0;
+  
+      const l2021 = lnst[2021] ?? 0;
+      const l2022 = lnst[2022] ?? 0;
+      const l2023 = lnst[2023] ?? 0;
+      const l2024 = lnst[2024] ?? 0;
+  
+      // Tô màu ô
+      const cR2021 = getCellColor(r2021);
+      const cR2022 = getCellColor(r2022);
+      const cR2023 = getCellColor(r2023);
+      const cR2024 = getCellColor(r2024);
+  
+      const cL2021 = getCellColor(l2021);
+      const cL2022 = getCellColor(l2022);
+      const cL2023 = getCellColor(l2023);
+      const cL2024 = getCellColor(l2024);
+  
+      html += `
+        <tr>
+          <td style="text-align:left;">${sector}</td>
+          <td style="${cR2021}">${r2021.toFixed(2)}</td>
+          <td style="${cR2022}">${r2022.toFixed(2)}</td>
+          <td style="${cR2023}">${r2023.toFixed(2)}</td>
+          <td style="${cR2024}">${r2024.toFixed(2)}</td>
+          <td style="${cL2021}">${l2021.toFixed(2)}</td>
+          <td style="${cL2022}">${l2022.toFixed(2)}</td>
+          <td style="${cL2023}">${l2023.toFixed(2)}</td>
+          <td style="${cL2024}">${l2024.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+  
+    html += `</tbody>`;
+    return html;
+  }
+  
+  fetch("data.json")
+    .then(res => res.json())
+    .then(json => {
+      const raw = json["classify_industry_growth_data"];
+      const allData = raw["data"];   // {Bán lẻ: {RevenueGrowth, LNSTGrowth}, ...}
+      const groups = raw["groups"];  // { "Tăng trưởng": [...], "Hồi phục": [...], ... }
+  
+      let tableHtml = "";
+      // Tạo 4 phần tương ứng 4 nhóm
+      tableHtml += createGroupSection("Tăng trưởng", allData, groups["Tăng trưởng"]);
+      tableHtml += createGroupSection("Hồi phục", allData, groups["Hồi phục"]);
+      tableHtml += createGroupSection("Tạo đáy", allData, groups["Tạo đáy"]);
+      tableHtml += createGroupSection("Suy yếu", allData, groups["Suy yếu"]);
+  
+      const tbl = document.getElementById("growthTable");
+      tbl.insertAdjacentHTML("beforeend", tableHtml);
+    })
+    .catch(err => console.error("Lỗi khi tải data.json:", err));
+  </script>
+<!-- Market5 -->
+<script>
+  fetch("data.json")
+    .then(response => response.json())
+    .then(data => {
+      // Lấy dữ liệu từ key "marketcap_by_sector_data"
+      const mcData = data["marketcap_by_sector_data"];
+
+      // Tạo mảng labels và values
+      let labels = Object.keys(mcData);
+      let values = Object.values(mcData);
+
+      // Nếu muốn sắp xếp giảm dần, ta có thể sắp xếp cặp [label, value] rồi tách lại
+      // Đoạn code dưới đây sắp xếp theo value giảm dần
+      const arr = Object.entries(mcData).sort((a, b) => b[1] - a[1]);
+      labels = arr.map(item => item[0]);
+      values = arr.map(item => item[1]);
+
+      const ctx = document.getElementById("marketcapChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Market Capitalization Proportion (%)",
+            data: values,
+            backgroundColor: "#144E8C",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',  // cột nằm ngang
+          plugins: {
+            title: {
+              display: true,
+              // text: "Tỷ trọng vốn hóa theo ngành"
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ": " + context.parsed.x + "%";
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              title: {
+                display: true,
+              }
+            },
+            y: {
+              title: {
+                display: false,
+              }
+            }
+          }
+        }
+      });
+    })
+    .catch(error => console.error("Lỗi khi tải data.json:", error));
+</script>
+
+<!-- Trang phụ lục -->
+<script>
+  async function loadFinancialData() {
+    try {
+      const response = await fetch("data.json");
+      const data = await response.json();
+
+      // Lấy dữ liệu từ key "extract_financial_data_data"
+      const raw = data["extract_financial_data_data"];
+      if (!raw) {
+        console.error("Không tìm thấy 'extract_financial_data_data' trong JSON.");
+        return;
+      }
+      
+      const KQKD = raw["KQKD"];
+      const CDKT = raw["CDKT"];
+      const LCCT = raw["LCCT"];
+
+      buildTableNormal(KQKD, "tableKQKD");
+      buildTableCDKT(CDKT, "tableCDKT");
+      buildTableNormal(LCCT, "tableLCCT");
+
+    } catch (err) {
+      console.error("Lỗi khi tải data.json:", err);
+    }
+  }
+
+  // Bảng KQKD & LCCT (không có breakdown)
+  function buildTableNormal(objData, tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    const fields = Object.keys(objData);
+    const years = [2020, 2021, 2022, 2023, 2024];
+
+    fields.forEach(field => {
+      const rowData = objData[field];
+      // Tạo 1 tr
+      const tr = document.createElement("tr");
+      // Cột chỉ tiêu
+      const tdLabel = document.createElement("td");
+      tdLabel.textContent = field;
+      tr.appendChild(tdLabel);
+
+      // 5 cột năm
+      years.forEach(yr => {
+        const td = document.createElement("td");
+        const val = rowData[yr] ?? "";
+        td.textContent = Number(val).toLocaleString("en-US");
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Bảng CDKT (có breakdown)
+  function buildTableCDKT(objData, tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    const fields = Object.keys(objData);
+    const years = [2020, 2021, 2022, 2023, 2024];
+
+    fields.forEach(field => {
+      const rowData = objData[field];
+      
+      // Xác định field nào cần in đậm, field nào cần tô màu
+      let cssClass = "";
+      // 4 chỉ tiêu in đậm
+      const boldList = ["Tài sản ngắn hạn", "Tài sản dài hạn", "Nợ phải trả", "Vốn chủ sở hữu"];
+      // 2 chỉ tiêu tô màu
+      const highlightList = ["Tổng cộng tài sản", "Tổng cộng nguồn vốn"];
+
+      if (boldList.includes(field)) {
+        cssClass = "bold-field";
+      } else if (highlightList.includes(field)) {
+        cssClass = "highlight-field";
+      }
+
+      // Kiểm tra xem rowData[2020] có phải object => breakdown
+      if (typeof rowData[2020] === "object") {
+        // Tạo dòng chính
+        const trMain = document.createElement("tr");
+        const tdLabelMain = document.createElement("td");
+        tdLabelMain.textContent = field;
+        if (cssClass) tdLabelMain.classList.add(cssClass);
+        trMain.appendChild(tdLabelMain);
+
+        years.forEach(yr => {
+          const td = document.createElement("td");
+          if (cssClass) td.classList.add(cssClass);
+          const valObj = rowData[yr]; // object
+          const totalVal = valObj["Tổng"] ?? "";
+          td.textContent = Number(totalVal).toLocaleString("en-US");
+          trMain.appendChild(td);
+        });
+        tbody.appendChild(trMain);
+
+        // Sub-item
+        const subKeys = Object.keys(rowData[2020]).filter(k => k !== "Tổng");
+        subKeys.forEach(subKey => {
+          const trSub = document.createElement("tr");
+          const tdLabelSub = document.createElement("td");
+          tdLabelSub.textContent = subKey;
+          tdLabelSub.classList.add("indent"); // Thụt lề
+          trSub.appendChild(tdLabelSub);
+
+          years.forEach(yr => {
+            const tdVal = document.createElement("td");
+            const valObj = rowData[yr];
+            const subVal = valObj[subKey] ?? "";
+            tdVal.textContent = Number(subVal).toLocaleString("en-US");
+            trSub.appendChild(tdVal);
+          });
+          tbody.appendChild(trSub);
+        });
+      } else {
+        // field KHÔNG có breakdown
+        const tr = document.createElement("tr");
+        const tdLabel = document.createElement("td");
+        tdLabel.textContent = field;
+        if (cssClass) tdLabel.classList.add(cssClass);
+        tr.appendChild(tdLabel);
+
+        years.forEach(yr => {
+          const td = document.createElement("td");
+          if (cssClass) td.classList.add(cssClass);
+          const val = rowData[yr] ?? "";
+          td.textContent = Number(val).toLocaleString("en-US");
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      }
+    });
+  }
+
+  // Gọi hàm
+  loadFinancialData();
+</script>
+<script>
+  async function loadData() {
+    try {
+      const response = await fetch("data.json");
+      const data = await response.json();
+      // Lấy dữ liệu từ key "extract_buy_sell_and_net_yearly_data" và sau đó key "monthly"
+      const raw = data["extract_buy_sell_and_net_yearly_data"];
+      const monthlyData = raw["monthly"];
+      // Lấy danh sách tháng và sắp xếp theo thứ tự (ví dụ: "2024-01", "2024-02", ...)
+      const months = Object.keys(monthlyData).sort();
+      // Sử dụng key ban đầu để truy xuất dữ liệu
+      const groups = ["CNTN", "CNNN", "TCTN", "TCNN"];
+      // Tạo mapping từ key sang tên đầy đủ
+      const groupNames = {
+        "CNTN": "Domestic Individuals",
+        "CNNN": "Foreign Individuals",
+        "TCTN": "Domestic Institutions",
+        "TCNN": "	Foreign Institutions"
+      };
+      
+      // Hàm tính giá trị ròng = (Mua - Bán)
+      function calcNet(tradeObj) {
+        return (tradeObj["Mua"] ?? 0) - (tradeObj["Bán"] ?? 0);
+      }
+      
+      // Tạo datasets cho giao dịch "Khớp lệnh"
+      const khopLenhDatasets = groups.map((group, idx) => {
+        return {
+          label: groupNames[group],  // Sử dụng tên đầy đủ
+          data: months.map(m => calcNet(monthlyData[m]["Khớp lệnh"][group])),
+          backgroundColor: ["#11249D", "#098CFE", "#E76B35", "#6B177D"][idx]
+        };
+      });
+      
+      // Tạo datasets cho giao dịch "Thỏa thuận"
+      const thoaThuanDatasets = groups.map((group, idx) => {
+        return {
+          label: groupNames[group],
+          data: months.map(m => calcNet(monthlyData[m]["Thỏa thuận"][group])),
+          backgroundColor: ["#11249D", "#098CFE", "#E76B35", "#6B177D"][idx]
+        };
+      });
+      
+      // Vẽ biểu đồ Khớp lệnh
+      const ctxKL = document.getElementById("chartKhopLenh").getContext("2d");
+      new Chart(ctxKL, {
+        type: "bar",
+        data: {
+          labels: months,
+          datasets: khopLenhDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              title: { display: true, }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              title: { display: true, text: "Net Value (VND Billion)" }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`
+              }
+            }
+          }
+        }
+      });
+      
+      // Vẽ biểu đồ Thỏa thuận
+      const ctxTT = document.getElementById("chartThoaThuan").getContext("2d");
+      new Chart(ctxTT, {
+        type: "bar",
+        data: {
+          labels: months,
+          datasets: thoaThuanDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              title: { display: true, }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              title: { display: true, text: "Net Value (VND Billion)" }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: context => `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`
+              }
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Lỗi khi load data:", err);
+    }
+  }
+  
+  loadData();
+</script>
+</body>
+</html>
